@@ -77,17 +77,19 @@ def count_word_occurrences(grid, word):
         for y in range(cols):
             for dir_x, dir_y in directions:
                 total_count += count_word_in_direction(grid, word, x, y, dir_x, dir_y)
-    
+
     return total_count
 
-def count_xmas_patterns(grid):
+def count_xmas_patterns_part2(grid):
     """
-    Counts all occurrences of the X-MAS pattern in the grid.
+    Counts all occurrences of the X-MAS pattern in the grid (Part 2).
 
     The X-MAS pattern is defined as:
         M . S
          . A .
         M . S
+
+    Each MAS can be written forwards (MAS) or backwards (SAM).
 
     Args:
         grid (List[List[str]]): 2D grid of characters.
@@ -98,21 +100,33 @@ def count_xmas_patterns(grid):
     rows, cols = len(grid), len(grid[0])
     total_count = 0
 
-    # Iterate through the grid, treating each cell as the potential center (A)
+    # Iterate through the grid, treating each cell as a potential center (A)
     for x in range(1, rows - 1):
         for y in range(1, cols - 1):
-            if grid[x][y] == 'A':  # Check if the cell is the center (A)
-                # Check top-left to bottom-right diagonal for MAS
-                if (
-                    is_valid_position(x - 1, y - 1, rows, cols) and grid[x - 1][y - 1] == 'M' and
-                    is_valid_position(x + 1, y + 1, rows, cols) and grid[x + 1][y + 1] == 'S'
-                ):
-                    # Check top-right to bottom-left diagonal for MAS
-                    if (
-                        is_valid_position(x - 1, y + 1, rows, cols) and grid[x - 1][y + 1] == 'M' and
-                        is_valid_position(x + 1, y - 1, rows, cols) and grid[x + 1][y - 1] == 'S'
-                    ):
-                        total_count += 1
+            if grid[x][y] == 'A':  # Center of the X-MAS
+                # Define the four diagonal positions
+                tl = (x - 1, y - 1)  # Top-Left
+                br = (x + 1, y + 1)  # Bottom-Right
+                tr = (x - 1, y + 1)  # Top-Right
+                bl = (x + 1, y - 1)  # Bottom-Left
+
+                # Diagonal 1: Top-Left to Bottom-Right
+                diag1 = False
+                if is_valid_position(*tl, rows, cols) and is_valid_position(*br, rows, cols):
+                    pair1 = (grid[tl[0]][tl[1]], grid[br[0]][br[1]])
+                    if pair1 == ('M', 'S') or pair1 == ('S', 'M'):
+                        diag1 = True
+
+                # Diagonal 2: Top-Right to Bottom-Left
+                diag2 = False
+                if is_valid_position(*tr, rows, cols) and is_valid_position(*bl, rows, cols):
+                    pair2 = (grid[tr[0]][tr[1]], grid[bl[0]][bl[1]])
+                    if pair2 == ('M', 'S') or pair2 == ('S', 'M'):
+                        diag2 = True
+
+                # Increment count if both diagonals are valid
+                if diag1 and diag2:
+                    total_count += 1
 
     return total_count
 
@@ -126,7 +140,7 @@ def main():
     if len(sys.argv) != 3:
         print("Usage: python ceres_search.py <input_file> [--part1|--part2]")
         sys.exit(1)
-    
+
     input_file = sys.argv[1]
     part = sys.argv[2]
 
@@ -138,7 +152,7 @@ def main():
             occurrences = count_word_occurrences(grid, word)
             print(f"Total occurrences of '{word}': {occurrences}")
         elif part == "--part2":
-            occurrences = count_xmas_patterns(grid)
+            occurrences = count_xmas_patterns_part2(grid)
             print(f"Total occurrences of X-MAS pattern: {occurrences}")
         else:
             print("Invalid option. Use --part1 or --part2.")
