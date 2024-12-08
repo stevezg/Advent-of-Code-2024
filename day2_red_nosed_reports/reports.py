@@ -4,20 +4,10 @@ from typing import List
 import sys
 
 def parse_input(input_data: str) -> List[List[int]]:
-    """
-    Parses the input data into a list of reports, each report is a list of integers.
-    
-    Args:
-        input_data (str): Multiline string where each line contains numbers separated by spaces.
-    
-    Returns:
-        List[List[int]]: A list of reports with each report represented as a list of integers.
-    """
     reports = []
     lines = input_data.strip().splitlines()
     for line_number, line in enumerate(lines, start=1):
         if not line.strip():
-            # Skip empty lines
             continue
         try:
             levels = list(map(int, line.strip().split()))
@@ -31,29 +21,13 @@ def parse_input(input_data: str) -> List[List[int]]:
     return reports
 
 def is_monotonic(report: List[int]) -> bool:
-    """
-    Checks if a report is strictly increasing or strictly decreasing.
-    
-    Args:
-        report (List[int]): A list of integers representing a report.
-    
-    Returns:
-        bool: True if the report is monotonic, False otherwise.
-    """
+    if len(report) < 2:
+        return False
     increasing = all(x < y for x, y in zip(report, report[1:]))
     decreasing = all(x > y for x, y in zip(report, report[1:]))
     return increasing or decreasing
 
 def has_valid_differences(report: List[int]) -> bool:
-    """
-    Checks if all adjacent differences in the report are between 1 and 3 inclusive.
-    
-    Args:
-        report (List[int]): A list of integers representing a report.
-    
-    Returns:
-        bool: True if all adjacent differences are within [1,3], False otherwise.
-    """
     for i in range(len(report) - 1):
         diff = abs(report[i+1] - report[i])
         if diff < 1 or diff > 3:
@@ -61,27 +35,11 @@ def has_valid_differences(report: List[int]) -> bool:
     return True
 
 def is_safe_report(report: List[int]) -> bool:
-    """
-    Determines if a report is safe based on monotonicity and adjacency differences.
-    
-    Args:
-        report (List[int]): A list of integers representing a report.
-    
-    Returns:
-        bool: True if the report is safe, False otherwise.
-    """
+    if len(report) < 2:
+        return False  # Cannot evaluate safety with less than two levels
     return is_monotonic(report) and has_valid_differences(report)
 
 def count_safe_reports(reports: List[List[int]]) -> int:
-    """
-    Counts the number of safe reports in the provided list.
-    
-    Args:
-        reports (List[List[int]]): A list of reports, each report is a list of integers.
-    
-    Returns:
-        int: The total number of safe reports.
-    """
     safe_count = 0
     for report in reports:
         if is_safe_report(report):
@@ -89,15 +47,6 @@ def count_safe_reports(reports: List[List[int]]) -> int:
     return safe_count
 
 def is_safe_report_with_dampener(report: List[int]) -> bool:
-    """
-    Determines if a report is safe either directly or by removing a single level.
-
-    Args:
-        report (List[int]): A list of integers representing a report.
-
-    Returns:
-        bool: True if the report is safe, False otherwise.
-    """
     # First, check if the report is already safe
     if is_safe_report(report):
         return True
@@ -117,15 +66,6 @@ def is_safe_report_with_dampener(report: List[int]) -> bool:
     return False  # No single removal makes the report safe
 
 def count_safe_reports_with_dampener(reports: List[List[int]]) -> int:
-    """
-    Counts the number of safe reports considering the Problem Dampener.
-
-    Args:
-        reports (List[List[int]]): A list of reports, each report is a list of integers.
-
-    Returns:
-        int: The total number of safe reports.
-    """
     safe_count = 0
     for report in reports:
         if is_safe_report_with_dampener(report):
@@ -133,12 +73,6 @@ def count_safe_reports_with_dampener(reports: List[List[int]]) -> int:
     return safe_count
 
 def main():
-    """
-    Main function to read input data from a file and compute the number of safe reports.
-
-    Usage:
-        python reports.py <input_file> [--part2]
-    """
     if len(sys.argv) < 2:
         print("Usage: python reports.py <input_file> [--part2]")
         sys.exit(1)
@@ -166,4 +100,4 @@ def main():
         sys.exit(1)
 
 if __name__ == "__main__":
-        main()
+    main()
