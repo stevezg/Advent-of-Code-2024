@@ -80,23 +80,70 @@ def count_word_occurrences(grid, word):
     
     return total_count
 
+def count_xmas_patterns(grid):
+    """
+    Counts all occurrences of the X-MAS pattern in the grid.
+
+    The X-MAS pattern is defined as:
+        M . S
+         . A .
+        M . S
+
+    Args:
+        grid (List[List[str]]): 2D grid of characters.
+
+    Returns:
+        int: Total occurrences of the X-MAS pattern in the grid.
+    """
+    rows, cols = len(grid), len(grid[0])
+    total_count = 0
+
+    # Iterate through the grid, treating each cell as the potential center (A)
+    for x in range(1, rows - 1):
+        for y in range(1, cols - 1):
+            if grid[x][y] == 'A':  # Check if the cell is the center (A)
+                # Check top-left to bottom-right diagonal for MAS
+                if (
+                    is_valid_position(x - 1, y - 1, rows, cols) and grid[x - 1][y - 1] == 'M' and
+                    is_valid_position(x + 1, y + 1, rows, cols) and grid[x + 1][y + 1] == 'S'
+                ):
+                    # Check top-right to bottom-left diagonal for MAS
+                    if (
+                        is_valid_position(x - 1, y + 1, rows, cols) and grid[x - 1][y + 1] == 'M' and
+                        is_valid_position(x + 1, y - 1, rows, cols) and grid[x + 1][y - 1] == 'S'
+                    ):
+                        total_count += 1
+
+    return total_count
+
 def main():
     """
-    Main function to count occurrences of the word XMAS in the grid.
+    Main function to count occurrences of either the word XMAS (Part One) or the X-MAS pattern (Part Two).
 
     Usage:
-        python ceres_search.py <input_file>
+        python ceres_search.py <input_file> [--part1|--part2]
     """
-    if len(sys.argv) != 2:
-        print("Usage: python ceres_search.py <input_file>")
+    if len(sys.argv) != 3:
+        print("Usage: python ceres_search.py <input_file> [--part1|--part2]")
         sys.exit(1)
     
     input_file = sys.argv[1]
+    part = sys.argv[2]
+
     try:
         grid = parse_grid(input_file)
-        word = "XMAS"
-        occurrences = count_word_occurrences(grid, word)
-        print(f"Total occurrences of '{word}': {occurrences}")
+
+        if part == "--part1":
+            word = "XMAS"
+            occurrences = count_word_occurrences(grid, word)
+            print(f"Total occurrences of '{word}': {occurrences}")
+        elif part == "--part2":
+            occurrences = count_xmas_patterns(grid)
+            print(f"Total occurrences of X-MAS pattern: {occurrences}")
+        else:
+            print("Invalid option. Use --part1 or --part2.")
+            sys.exit(1)
+
     except FileNotFoundError:
         print(f"Error: The file '{input_file}' was not found.")
         sys.exit(1)
