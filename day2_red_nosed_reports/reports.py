@@ -88,25 +88,76 @@ def count_safe_reports(reports: List[List[int]]) -> int:
             safe_count += 1
     return safe_count
 
+def is_safe_report_with_dampener(report: List[int]) -> bool:
+    """
+    Determines if a report is safe either directly or by removing a single level.
+
+    Args:
+        report (List[int]): A list of integers representing a report.
+
+    Returns:
+        bool: True if the report is safe, False otherwise.
+    """
+    # First, check if the report is already safe
+    if is_safe_report(report):
+        return True
+
+    # Attempt to remove each level and check if the report becomes safe
+    for i in range(len(report)):
+        # Create a new report with the i-th level removed
+        modified_report = report[:i] + report[i+1:]
+        
+        # Check if the modified report has at least two levels
+        if len(modified_report) < 2:
+            continue  # A report with less than two levels cannot be evaluated for safety
+
+        if is_safe_report(modified_report):
+            return True  # Found a removal that makes the report safe
+
+    return False  # No single removal makes the report safe
+
+def count_safe_reports_with_dampener(reports: List[List[int]]) -> int:
+    """
+    Counts the number of safe reports considering the Problem Dampener.
+
+    Args:
+        reports (List[List[int]]): A list of reports, each report is a list of integers.
+
+    Returns:
+        int: The total number of safe reports.
+    """
+    safe_count = 0
+    for report in reports:
+        if is_safe_report_with_dampener(report):
+            safe_count += 1
+    return safe_count
+
 def main():
     """
     Main function to read input data from a file and compute the number of safe reports.
-    
+
     Usage:
-        python reports.py <input_file>
+        python reports.py <input_file> [--part2]
     """
-    if len(sys.argv) != 2:
-        print("Usage: python reports.py <input_file>")
+    if len(sys.argv) < 2:
+        print("Usage: python reports.py <input_file> [--part2]")
         sys.exit(1)
     
     input_file = sys.argv[1]
+    part = sys.argv[2] if len(sys.argv) > 2 else "1"
+
     try:
         with open(input_file, 'r') as f:
             input_data = f.read()
         
         reports = parse_input(input_data)
-        safe_reports = count_safe_reports(reports)
-        print(f"Number of Safe Reports: {safe_reports}")
+        
+        if part == "2":
+            safe_reports = count_safe_reports_with_dampener(reports)
+            print(f"Number of Safe Reports (Part 2): {safe_reports}")
+        else:
+            safe_reports = count_safe_reports(reports)
+            print(f"Number of Safe Reports (Part 1): {safe_reports}")
     except FileNotFoundError:
         print(f"Error: The file '{input_file}' was not found.")
         sys.exit(1)
@@ -115,4 +166,4 @@ def main():
         sys.exit(1)
 
 if __name__ == "__main__":
-    main()
+        main()
