@@ -1,4 +1,4 @@
-# day6_guard_gallivant/guard_gallivant_optimized.py
+# day6_guard_gallivant_corrected.py
 
 import sys
 
@@ -19,16 +19,18 @@ def parse_map(input_file):
     guard_position = None
     direction = None
 
+    # Map symbols to direction integers
     direction_map = {'^': 0, '>': 1, 'v': 2, '<': 3}
 
     with open(input_file, 'r') as file:
         for row_idx, line in enumerate(file):
+            line = line.rstrip('\n')  # Remove trailing newline
             row = []
-            for col_idx, char in enumerate(line.strip()):
+            for col_idx, char in enumerate(line):
                 if char in direction_map:
                     guard_position = (row_idx, col_idx)
                     direction = direction_map[char]
-                    row.append(False)  # Replace guard's initial position with empty space
+                    row.append(False)  # Replace guard's position with empty space
                 elif char == '#':
                     row.append(True)   # Obstacle
                 else:
@@ -40,7 +42,7 @@ def parse_map(input_file):
 
     return grid, guard_position, direction
 
-def simulate_guard(grid, initial_position, initial_direction):
+def simulate_guard_corrected(grid, initial_position, initial_direction):
     """
     Simulates the guard's patrol and tracks visited positions.
 
@@ -77,19 +79,33 @@ def simulate_guard(grid, initial_position, initial_direction):
         next_row = current_row + delta_rows[current_dir]
         next_col = current_col + delta_cols[current_dir]
 
-        # Check if the next position is within bounds and not an obstacle
-        if 0 <= next_row < rows and 0 <= next_col < cols and not grid[next_row][next_col]:
-            # Move forward
-            current_row, current_col = next_row, next_col
-            if not visited[current_row][current_col]:
-                visited[current_row][current_col] = True
-                visited_count += 1
+        # Check if the next position is within bounds
+        if 0 <= next_row < rows and 0 <= next_col < cols:
+            if not grid[next_row][next_col]:
+                # Move forward
+                current_row, current_col = next_row, next_col
+                if not visited[current_row][current_col]:
+                    visited[current_row][current_col] = True
+                    visited_count += 1
+                continue  # Proceed to next iteration
+            else:
+                # Turn right and attempt to move forward in the new direction
+                current_dir = right_turn[current_dir]
+                # Calculate new next position after turning right
+                new_next_row = current_row + delta_rows[current_dir]
+                new_next_col = current_col + delta_cols[current_dir]
+                if 0 <= new_next_row < rows and 0 <= new_next_col < cols and not grid[new_next_row][new_next_col]:
+                    # Move forward in the new direction
+                    current_row, current_col = new_next_row, new_next_col
+                    if not visited[current_row][current_col]:
+                        visited[current_row][current_col] = True
+                        visited_count += 1
+                    continue  # Proceed to next iteration
+                else:
+                    # Obstacle after turning right, continue to turn right in the next iteration
+                    continue
         else:
-            # Turn right
-            current_dir = right_turn[current_dir]
-
-        # Check if the guard has moved out of the grid
-        if not (0 <= current_row < rows and 0 <= current_col < cols):
+            # Guard has moved out of the grid
             break
 
     return visited_count
@@ -99,17 +115,17 @@ def main():
     Main function to predict the guard's patrol path.
 
     Usage:
-        python guard_gallivant_optimized.py <input_file>
+        python guard_gallivant_corrected.py <input_file>
     """
     if len(sys.argv) != 2:
-        print("Usage: python guard_gallivant_optimized.py <input_file>")
+        print("Usage: python guard_gallivant_corrected.py <input_file>")
         sys.exit(1)
 
     input_file = sys.argv[1]
 
     try:
         grid, initial_position, initial_direction = parse_map(input_file)
-        result = simulate_guard(grid, initial_position, initial_direction)
+        result = simulate_guard_corrected(grid, initial_position, initial_direction)
         print(f"Number of distinct positions visited: {result}")
     except FileNotFoundError:
         print(f"Error: The file '{input_file}' was not found.")
@@ -122,4 +138,4 @@ def main():
         sys.exit(1)
 
 if __name__ == "__main__":
-        main()
+    main()
