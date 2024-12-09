@@ -1,5 +1,7 @@
 # day6_guard_gallivant/guard_gallivant_optimized.py
 
+import sys
+
 def parse_map(input_file):
     """
     Parses the input file into a grid and extracts the initial position and direction of the guard.
@@ -8,65 +10,89 @@ def parse_map(input_file):
         input_file (str): Path to the input file.
 
     Returns:
-        Tuple[List[List[str]], Tuple[int, int, str]]: The grid and the initial position and direction of the guard.
+        Tuple[List[List[bool]], Tuple[int, int], int]: 
+            - Grid as a 2D list where True represents an obstacle.
+            - Initial position as (row, col).
+            - Initial direction as an integer (0=Up, 1=Right, 2=Down, 3=Left).
     """
     grid = []
     guard_position = None
     direction = None
 
-    direction_map = {'^': 'U', '>': 'R', 'v': 'D', '<': 'L'}
+    direction_map = {'^': 0, '>': 1, 'v': 2, '<': 3}
 
     with open(input_file, 'r') as file:
         for row_idx, line in enumerate(file):
-            row = list(line.strip())
-            for col_idx, char in enumerate(row):
+            row = []
+            for col_idx, char in enumerate(line.strip()):
                 if char in direction_map:
                     guard_position = (row_idx, col_idx)
                     direction = direction_map[char]
-                    row[col_idx] = '.'  # Replace the guard's initial position with empty space
+                    row.append(False)  # Replace guard's initial position with empty space
+                elif char == '#':
+                    row.append(True)   # Obstacle
+                else:
+                    row.append(False)  # Empty space
             grid.append(row)
 
-    return grid, guard_position, direction
+    if guard_position is None or direction is None:
+        raise ValueError("Guard's initial position and direction not found in the map.")
 
+    return grid, guard_position, direction
 
 def simulate_guard(grid, initial_position, initial_direction):
     """
     Simulates the guard's patrol and tracks visited positions.
 
     Args:
-        grid (List[List[str]]): The grid representing the map.
+        grid (List[List[bool]]): The grid representing the map.
         initial_position (Tuple[int, int]): The initial position of the guard (row, col).
-        initial_direction (str): The initial direction of the guard ('U', 'R', 'D', 'L').
+        initial_direction (int): The initial direction of the guard (0=Up, 1=Right, 2=Down, 3=Left).
 
     Returns:
         int: The number of distinct positions visited by the guard.
     """
-    rows, cols = len(grid), len(grid[0])
-    visited = set()
-    position = initial_position
-    direction = initial_direction
+    rows = len(grid)
+    cols = len(grid[0]) if rows > 0 else 0
 
-    # Define movement and turning
-    direction_map = {'U': (-1, 0), 'R': (0, 1), 'D': (1, 0), 'L': (0, -1)}
-    right_turn = {'U': 'R', 'R': 'D', 'D': 'L', 'L': 'U'}
+    # Initialize visited grid
+    visited = [[False for _ in range(cols)] for _ in range(rows)]
 
-    while 0 <= position[0] < rows and 0 <= position[1] < cols:
-        visited.add(position)
+    # Direction deltas: Up, Right, Down, Left
+    delta_rows = [-1, 0, 1, 0]
+    delta_cols = [0, 1, 0, -1]
 
-        # Get the position in front of the guard
-        dr, dc = direction_map[direction]
-        next_row, next_col = position[0] + dr, position[1] + dc
+    # Right turn mapping: 0->1, 1->2, 2->3, 3->0
+    right_turn = [1, 2, 3, 0]
 
-        # Check if the guard should turn or move forward
-        if 0 <= next_row < rows and 0 <= next_col < cols and grid[next_row][next_col] != '#':
+    current_row, current_col = initial_position
+    current_dir = initial_direction
+
+    # Mark the initial position as visited
+    visited[current_row][current_col] = True
+    visited_count = 1
+
+    while True:
+        # Calculate the next position based on the current direction
+        next_row = current_row + delta_rows[current_dir]
+        next_col = current_col + delta_cols[current_dir]
+
+        # Check if the next position is within bounds and not an obstacle
+        if 0 <= next_row < rows and 0 <= next_col < cols and not grid[next_row][next_col]:
             # Move forward
-            position = (next_row, next_col)
+            current_row, current_col = next_row, next_col
+            if not visited[current_row][current_col]:
+                visited[current_row][current_col] = True
+                visited_count += 1
         else:
             # Turn right
-            direction = right_turn[direction]
+            current_dir = right_turn[current_dir]
 
-    return len(visited)
+        # Check if the guard has moved out of the grid
+        if not (0 <= current_row < rows and 0 <= current_col < cols):
+            break
 
+    return visited_count
 
 def main():
     """
@@ -75,7 +101,6 @@ def main():
     Usage:
         python guard_gallivant_optimized.py <input_file>
     """
-    import sys
     if len(sys.argv) != 2:
         print("Usage: python guard_gallivant_optimized.py <input_file>")
         sys.exit(1)
@@ -89,10 +114,12 @@ def main():
     except FileNotFoundError:
         print(f"Error: The file '{input_file}' was not found.")
         sys.exit(1)
+    except ValueError as ve:
+        print(f"Error: {ve}")
+        sys.exit(1)
     except Exception as e:
-        print(f"An error occurred: {e}")
+        print(f"An unexpected error occurred: {e}")
         sys.exit(1)
 
-
 if __name__ == "__main__":
-    main()
+        main()
