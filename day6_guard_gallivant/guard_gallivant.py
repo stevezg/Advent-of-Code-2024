@@ -42,7 +42,7 @@ def parse_map(input_file):
 
     return grid, guard_position, direction
 
-def simulate_guard_corrected(grid, initial_position, initial_direction):
+def simulate_guard(grid, initial_position, initial_direction):
     """
     Simulates the guard's patrol and tracks visited positions.
 
@@ -125,7 +125,7 @@ def main():
 
     try:
         grid, initial_position, initial_direction = parse_map(input_file)
-        result = simulate_guard_corrected(grid, initial_position, initial_direction)
+        result = simulate_guard(grid, initial_position, initial_direction)
         print(f"Number of distinct positions visited: {result}")
     except FileNotFoundError:
         print(f"Error: The file '{input_file}' was not found.")
