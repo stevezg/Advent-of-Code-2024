@@ -1,8 +1,7 @@
-
 # day5_print_queue/print_queue.py
 
 import sys
-from collections import defaultdict
+from collections import defaultdict, deque
 
 def parse_input(input_file):
     """
@@ -47,6 +46,44 @@ def is_update_valid(update, rules):
 
     return True
 
+def reorder_update(update, rules):
+    """
+    Reorders an update according to the precedence rules.
+
+    Args:
+        update (List[int]): The list of page numbers in the update.
+        rules (List[Tuple[int, int]]): A list of precedence rules as (X, Y) tuples.
+
+    Returns:
+        List[int]: The reordered update.
+    """
+    # Create a graph of dependencies
+    graph = defaultdict(list)
+    indegree = defaultdict(int)
+
+    for x, y in rules:
+        if x in update and y in update:
+            graph[x].append(y)
+            indegree[y] += 1
+
+    # Add all pages in the update to the indegree map if they have no dependencies
+    for page in update:
+        indegree.setdefault(page, 0)
+
+    # Perform a topological sort
+    queue = deque([node for node in update if indegree[node] == 0])
+    sorted_update = []
+
+    while queue:
+        current = queue.popleft()
+        sorted_update.append(current)
+        for neighbor in graph[current]:
+            indegree[neighbor] -= 1
+            if indegree[neighbor] == 0:
+                queue.append(neighbor)
+
+    return sorted_update
+
 def find_middle_page(update):
     """
     Finds the middle page number in the update.
@@ -59,44 +96,46 @@ def find_middle_page(update):
     """
     return update[len(update) // 2]
 
-def process_print_queue(input_file):
+def process_incorrect_updates(input_file):
     """
-    Processes the print queue to find the sum of the middle page numbers for valid updates.
+    Processes the print queue to find the sum of the middle page numbers for reordered incorrect updates.
 
     Args:
         input_file (str): Path to the input file.
 
     Returns:
-        int: The sum of the middle page numbers for valid updates.
+        int: The sum of the middle page numbers for reordered incorrect updates.
     """
     rules, updates = parse_input(input_file)
-    valid_updates = []
+    incorrect_updates = []
 
     for update in updates:
-        if is_update_valid(update, rules):
-            valid_updates.append(update)
+        if not is_update_valid(update, rules):
+            incorrect_updates.append(update)
 
-    # Calculate the sum of middle page numbers for valid updates
-    middle_sum = sum(find_middle_page(update) for update in valid_updates)
+    # Reorder each incorrect update and calculate the sum of middle pages
+    reordered_middle_sum = sum(
+        find_middle_page(reorder_update(update, rules)) for update in incorrect_updates
+    )
 
-    return middle_sum
+    return reordered_middle_sum
 
 def main():
     """
-    Main function to read input and print the result.
+    Main function to process the print queue for part 2.
 
     Usage:
-        python print_queue.py <input_file>
+        python print_queue.py <input_file> --part2
     """
-    if len(sys.argv) != 2:
-        print("Usage: python print_queue.py <input_file>")
+    if len(sys.argv) != 3 or sys.argv[2] != "--part2":
+        print("Usage: python print_queue.py <input_file> --part2")
         sys.exit(1)
 
     input_file = sys.argv[1]
 
     try:
-        result = process_print_queue(input_file)
-        print(f"Sum of middle page numbers for valid updates: {result}")
+        result = process_incorrect_updates(input_file)
+        print(f"Sum of middle page numbers for reordered incorrect updates: {result}")
     except FileNotFoundError:
         print(f"Error: The file '{input_file}' was not found.")
         sys.exit(1)
