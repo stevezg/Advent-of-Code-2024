@@ -1,4 +1,4 @@
-# day6_guard_gallivant_corrected.py
+# guard_gallivant.py
 
 import sys
 
