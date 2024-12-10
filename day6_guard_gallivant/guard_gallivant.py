@@ -110,23 +110,103 @@ def simulate_guard(grid, initial_position, initial_direction):
 
     return visited_count
 
-def main():
+def simulate_guard_with_obstacle(grid, initial_position, initial_direction, obstacle_pos):
     """
-    Main function to predict the guard's patrol path.
+    Simulate the guard's movement with one additional obstacle placed at obstacle_pos.
+    Return True if the guard gets stuck in a loop, False otherwise.
+    """
+    rows = len(grid)
+    cols = len(grid[0]) if rows > 0 else 0
 
-    Usage:
-        python guard_gallivant_corrected.py <input_file>
-    """
+    # Direction vectors: Up, Right, Down, Left
+    delta_rows = [-1, 0, 1, 0]
+    delta_cols = [0, 1, 0, -1]
+
+    # Right turn mapping
+    right_turn = [1, 2, 3, 0]
+
+    # Place the new obstacle
+    (obs_r, obs_c) = obstacle_pos
+    grid[obs_r][obs_c] = True
+
+    current_row, current_col = initial_position
+    current_dir = initial_direction
+
+    visited_states = set()
+    visited_states.add((current_row, current_col, current_dir))
+
+    while True:
+        # Compute next forward position
+        next_row = current_row + delta_rows[current_dir]
+        next_col = current_col + delta_cols[current_dir]
+
+        if 0 <= next_row < rows and 0 <= next_col < cols:
+            # If front cell is blocked, turn right
+            if grid[next_row][next_col]:
+                current_dir = right_turn[current_dir]
+                # After turning right, try moving forward again
+                next_row = current_row + delta_rows[current_dir]
+                next_col = current_col + delta_cols[current_dir]
+                
+                if 0 <= next_row < rows and 0 <= next_col < cols and not grid[next_row][next_col]:
+                    current_row, current_col = next_row, next_col
+                else:
+                    # If still blocked after turning right, continue turning in next iteration
+                    # Just rotate direction again next loop iteration
+                    continue
+            else:
+                # Move forward
+                current_row, current_col = next_row, next_col
+        else:
+            # Guard leaves the map
+            grid[obs_r][obs_c] = False  # Remove obstacle
+            return False
+
+        # Check for loop
+        state = (current_row, current_col, current_dir)
+        if state in visited_states:
+            # Loop detected
+            grid[obs_r][obs_c] = False  # Remove obstacle
+            return True
+        else:
+            visited_states.add(state)
+
+
+def find_loop_positions(grid, initial_position, initial_direction):
+    rows = len(grid)
+    cols = len(grid[0]) if rows > 0 else 0
+    loop_count = 0
+
+    start_r, start_c = initial_position
+
+    for r in range(rows):
+        for c in range(cols):
+            # Check only empty cells and not the guard's start
+            if (r, c) != (start_r, start_c) and not grid[r][c]:
+                if simulate_guard_with_obstacle(grid, initial_position, initial_direction, (r, c)):
+                    loop_count += 1
+
+    return loop_count
+
+
+def main():
     if len(sys.argv) != 2:
-        print("Usage: python guard_gallivant_corrected.py <input_file>")
+        print("Usage: python guard_gallivant.py <input_file>")
         sys.exit(1)
 
     input_file = sys.argv[1]
 
     try:
         grid, initial_position, initial_direction = parse_map(input_file)
-        result = simulate_guard(grid, initial_position, initial_direction)
-        print(f"Number of distinct positions visited: {result}")
+
+        # Part One result
+        result_part_one = simulate_guard(grid, initial_position, initial_direction)
+        print(f"Number of distinct positions visited (Part One): {result_part_one}")
+
+        # Part Two result
+        loop_positions_count = find_loop_positions(grid, initial_position, initial_direction)
+        print(f"Number of positions that would create a loop (Part Two): {loop_positions_count}")
+
     except FileNotFoundError:
         print(f"Error: The file '{input_file}' was not found.")
         sys.exit(1)
@@ -136,6 +216,7 @@ def main():
     except Exception as e:
         print(f"An unexpected error occurred: {e}")
         sys.exit(1)
+
 
 if __name__ == "__main__":
     main()
